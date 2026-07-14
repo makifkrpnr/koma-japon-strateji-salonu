@@ -1,0 +1,9 @@
+{
+  "name":"koma-japon-strateji-salonu",
+  "version":"1.0.0",
+  "private":true,
+  "description":"Shogi ve Hasami Shogi için mobil öncelikli ukiyo-e temalı web oyunu.",
+  "main":"server.js",
+  "scripts":{"start":"node server.js","test":"node tests/engine.test.js"},
+  "engines":{"node":">=18"}
+}

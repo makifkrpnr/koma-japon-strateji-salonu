@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: koma-japon-strateji-salonu
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: echo "KOMA bağımlılıksız olarak hazırlandı"
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
