@@ -118,3 +118,18 @@ tests/
 ## Lisans notu
 
 Kod, özgün arayüz ve özgün SVG/CSS süslemeleri bu proje için hazırlanmıştır. Uygulamada dışarıdan kopyalanmış logo, fotoğraf veya sanat eseri kullanılmaz.
+
+## v1.1 görsel ve ses güncellemesi
+
+- Shogi tarafları artık yalnız yönleriyle değil, renkleriyle de ayrılır:
+  - **Sente:** açık akçaağaç/altın taş, lacivert karakter, kırmızı mühür çizgisi
+  - **Gote:** koyu indigo/vernikli taş, krem karakter, altın mühür çizgisi
+- Terfi etmiş taşların renkleri iki tarafta ayrı ve yüksek kontrastlıdır.
+- Elde tutulan Shogi taşları da sahibinin renk düzenini taşır.
+- Oyuncu başlıklarında taraf renklerini gösteren küçük işaretler bulunur.
+- `Traditional Japanese Theme` arka plan müziği uygulama boyunca kesintisiz döngüde çalar.
+- Müzik, mobil tarayıcı kuralları nedeniyle kullanıcının ilk dokunuşundan sonra başlar.
+- Sağ üstte; mobilde alt menünün üzerinde duran **Müzik Açık/Kapalı** düğmesi vardır.
+- Müzik tercihi tarayıcıda saklanır.
+- 120,6 saniyelik kaynak WAV, web için 160 kbps MP3 biçimine çevrilmiştir.
+- Sunucu ve PWA önbelleği MP3 byte-range isteklerini destekler.

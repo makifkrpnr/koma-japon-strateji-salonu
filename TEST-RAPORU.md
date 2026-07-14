@@ -42,3 +42,13 @@ Render’a kurduktan sonra şu senaryoları birlikte deneyin:
 - Mobilde dikey ve yatay ekran
 - Bağlantıyı kısa süre kesip yeniden açma
 - Render uyandıktan sonraki ilk oda kurulumu
+
+## v1.1 ek kontroller
+
+- Shogi Sente ve Gote taşlarının farklı CSS renk sınıfları üretildi.
+- Mobil 390×844 görünümünde iki tarafın renkleri görsel olarak kontrol edildi.
+- Arka plan oynatıcısında `loop=true`, ses düzeyi `0.28` ve ilk kullanıcı etkileşiminden sonra oynatma doğrulandı.
+- Müzik düğmesinin açık/kapalı durumu ve ayar ekranındaki müzik seçeneği bağlandı.
+- MP3 dosyası 120,58 saniye ve 160 kbps olarak doğrulandı.
+- Sunucunun MP3 için `206 Partial Content` ve byte-range yanıtı verdiği doğrulandı.
+- Service Worker önbellek sürümü `koma-v1.1.0` olarak güncellendi.

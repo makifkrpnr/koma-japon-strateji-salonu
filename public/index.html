@@ -15,6 +15,12 @@
   <div class="ukiyo-scenery" aria-hidden="true">
     <div class="sun-disc"></div><div class="fuji"></div><div class="wave wave-a"></div><div class="wave wave-b"></div>
   </div>
+  <audio id="bg-music" loop preload="auto" playsinline aria-hidden="true">
+    <source src="/assets/audio/traditional-japanese-theme.mp3" type="audio/mpeg" />
+  </audio>
+  <button id="music-toggle" class="music-toggle" type="button" aria-label="Arka plan müziğini kapat" aria-pressed="true">
+    <span class="music-icon" aria-hidden="true">♫</span><span class="music-label">Müzik Açık</span>
+  </button>
   <div id="app" class="app-shell"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="modal-root"></div>

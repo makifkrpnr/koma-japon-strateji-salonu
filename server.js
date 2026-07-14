@@ -9,7 +9,7 @@ const PUBLIC = path.join(__dirname,'public');
 const PORT = Number(process.env.PORT)||8080;
 const rooms = new Map();
 const clients = new Set();
-const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml'};
+const MIME={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'application/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.mp3':'audio/mpeg','.wav':'audio/wav'};
 
 function serve(req,res){
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
@@ -22,7 +22,18 @@ function serve(req,res){
   if(!full.startsWith(PUBLIC)){res.writeHead(403);res.end('Forbidden');return;}
   fs.stat(full,(err,st)=>{
     if(err||!st.isFile()){res.writeHead(404,{'content-type':'text/plain; charset=utf-8'});res.end('Bulunamadı');return;}
-    res.writeHead(200,{'content-type':MIME[path.extname(full)]||'application/octet-stream','cache-control':path.extname(full)==='.html'?'no-cache':'public, max-age=3600'});
+    const ext=path.extname(full);
+    const type=MIME[ext]||'application/octet-stream';
+    const range=req.headers.range;
+    if(range&&(ext==='.mp3'||ext==='.wav')){
+      const match=/bytes=(\d+)-(\d*)/.exec(range);
+      const start=match?Number(match[1]):0;
+      const end=match&&match[2]?Math.min(Number(match[2]),st.size-1):st.size-1;
+      if(start>=st.size||end<start){res.writeHead(416,{'content-range':`bytes */${st.size}`});res.end();return;}
+      res.writeHead(206,{'content-type':type,'content-length':end-start+1,'content-range':`bytes ${start}-${end}/${st.size}`,'accept-ranges':'bytes','cache-control':'public, max-age=86400'});
+      fs.createReadStream(full,{start,end}).pipe(res);return;
+    }
+    res.writeHead(200,{'content-type':type,'content-length':st.size,'accept-ranges':(ext==='.mp3'||ext==='.wav')?'bytes':'none','cache-control':ext==='.html'?'no-cache':'public, max-age=3600'});
     fs.createReadStream(full).pipe(res);
   });
 }

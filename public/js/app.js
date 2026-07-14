@@ -5,6 +5,8 @@
   const app = $('#app');
   const toastEl = $('#toast');
   const modalRoot = $('#modal-root');
+  const bgMusic = $('#bg-music');
+  const musicToggle = $('#music-toggle');
 
   const PIECE = {
     K:{jp:'王',tr:'Şah'},R:{jp:'飛',tr:'Kale'},B:{jp:'角',tr:'Fil'},G:{jp:'金',tr:'Altın'},
@@ -19,7 +21,7 @@
 
   const state = {
     screen:'home', game:null, mode:null, difficulty:'normal',
-    names:['Oyuncu 1','Oyuncu 2'], rotateCoop:true, sound:true,
+    names:['Oyuncu 1','Oyuncu 2'], rotateCoop:true, sound:true, music:localStorage.getItem('koma-music')!=='off',
     gameState:null, selected:null, handSelected:null, legal:[],
     humanSeat:0, socket:null, room:null, roomToken:null, connected:false,
     tutorialGame:'shogi', tutorialStep:0, waiting:false, previousState:null
@@ -30,6 +32,30 @@
   function modal(html){modalRoot.innerHTML=`<div class="modal-backdrop"><div class="modal">${html}</div></div>`;}
   function closeModal(){modalRoot.innerHTML='';}
   function go(screen){state.screen=screen;state.selected=null;state.handSelected=null;state.legal=[];render();window.scrollTo({top:0,behavior:'smooth'});}
+
+  function updateMusicUI(){
+    if(!musicToggle)return;
+    musicToggle.classList.toggle('muted',!state.music);
+    musicToggle.setAttribute('aria-pressed',String(state.music));
+    musicToggle.setAttribute('aria-label',state.music?'Arka plan müziğini kapat':'Arka plan müziğini aç');
+    const label=musicToggle.querySelector('.music-label');
+    const icon=musicToggle.querySelector('.music-icon');
+    if(label)label.textContent=state.music?'Müzik Açık':'Müzik Kapalı';
+    if(icon)icon.textContent=state.music?'♫':'♪';
+  }
+  async function startMusic(){
+    if(!state.music||!bgMusic)return;
+    bgMusic.volume=.28;
+    try{await bgMusic.play();}catch(_){ }
+  }
+  function setMusic(enabled){
+    state.music=!!enabled;
+    localStorage.setItem('koma-music',state.music?'on':'off');
+    if(state.music)startMusic();else bgMusic?.pause();
+    updateMusicUI();
+  }
+  function toggleMusic(){setMusic(!state.music);}
+
   function playTone(kind='click'){
     if(!state.sound)return;
     try{
@@ -77,6 +103,7 @@
       ${isAI?`<div class="field wide"><label>Yapay zekâ seviyesi</label><div class="segment">${['easy','normal','hard'].map(x=>`<button data-difficulty="${x}" class="${state.difficulty===x?'active':''}">${{easy:'Çırak',normal:'Samuray',hard:'Şogun'}[x]}</button>`).join('')}</div></div>`:''}
       ${isCoop?`<div class="field wide"><label>Her turda tahtayı sıradaki oyuncuya çevir</label><div class="segment"><button data-rotate="true" class="${state.rotateCoop?'active':''}">Açık</button><button data-rotate="false" class="${!state.rotateCoop?'active':''}">Kapalı</button></div></div>`:''}
       <div class="field wide"><label>Ses efektleri</label><div class="segment"><button data-sound="true" class="${state.sound?'active':''}">Açık</button><button data-sound="false" class="${!state.sound?'active':''}">Kapalı</button></div></div>
+      <div class="field wide"><label>Arka plan müziği</label><div class="segment"><button data-music="true" class="${state.music?'active':''}">Açık</button><button data-music="false" class="${!state.music?'active':''}">Kapalı</button></div></div>
     </div><div style="display:flex;justify-content:flex-end;margin-top:20px"><button class="btn verm" data-action="start-local">Oyunu Başlat</button></div></div></section>`;
   }
 
@@ -101,9 +128,9 @@
     const p0=state.names[0]||'Oyuncu 1',p1=state.names[1]||'Oyuncu 2';
     return `<section class="screen game-screen ${game}-theme">
       <header class="game-hud">
-        <div class="player-pill ${turn===0?'active':''}"><div class="player-name">${esc(p0)}</div><div class="player-meta">${game==='hasami'?`Yakalanan: ${s.captures[0]}`:handCount(s,0)+' elde taş'}</div></div>
+        <div class="player-pill sente ${turn===0?'active':''}"><div class="player-name">${esc(p0)}</div><div class="player-meta">${game==='hasami'?`Yakalanan: ${s.captures[0]}`:handCount(s,0)+' elde taş'}</div></div>
         <div class="turn-center"><strong>${turn===0?'先手':'後手'} · ${turn===0?'SENTE':'GOTE'}</strong><span>${s.moveNumber}. hamle${s.check?' · ŞAH!':''}</span></div>
-        <div class="player-pill right ${turn===1?'active':''}"><div class="player-name">${esc(p1)}</div><div class="player-meta">${game==='hasami'?`Yakalanan: ${s.captures[1]}`:handCount(s,1)+' elde taş'}</div></div>
+        <div class="player-pill right gote ${turn===1?'active':''}"><div class="player-name">${esc(p1)}</div><div class="player-meta">${game==='hasami'?`Yakalanan: ${s.captures[1]}`:handCount(s,1)+' elde taş'}</div></div>
       </header>
       <div class="game-layout">
         <aside class="side-panel">${game==='shogi'?handPanel(s,flipped?0:1):capturePanel(s,flipped?0:1)}${moveList(s)}</aside>
@@ -116,7 +143,7 @@
 
   function handCount(s,p){return Object.values(s.hands[p]).reduce((a,b)=>a+b,0);}
   function handPanel(s,p){
-    const pieces=C.HAND_TYPES.filter(t=>s.hands[p][t]>0).map(t=>`<button class="hand-piece ${state.handSelected===t&&s.turn===p?'active':''}" data-hand="${t}" data-owner="${p}">${PIECE[t].jp}<small>${s.hands[p][t]}</small></button>`).join('');
+    const pieces=C.HAND_TYPES.filter(t=>s.hands[p][t]>0).map(t=>`<button class="hand-piece owner-${p} ${state.handSelected===t&&s.turn===p?'active':''}" data-hand="${t}" data-owner="${p}">${PIECE[t].jp}<small>${s.hands[p][t]}</small></button>`).join('');
     return `<h3>${p===0?esc(state.names[0]):esc(state.names[1])} · eldeki taşlar</h3><div class="hand">${pieces||'<span class="empty-note">Henüz taş yok</span>'}</div>`;
   }
   function capturePanel(s,p){return `<h3>${p===0?esc(state.names[0]):esc(state.names[1])}</h3><div class="stat"><strong>${s.captures[p]}</strong><br><small>yakalanan taş</small></div>`;}
@@ -149,12 +176,12 @@
     }
     return `<div class="board">${cells.join('')}</div>`;
   }
-  function pieceLabel(p){return p.type?`${p.promoted?'Terfi etmiş ':''}${PIECE[p.type].tr}`:`${p.owner===0?'Kırmızı':'Açık'} taş`;}
+  function pieceLabel(p){return p.type?`${p.owner===0?'Sente':'Gote'} · ${p.promoted?'Terfi etmiş ':''}${PIECE[p.type].tr}`:`${p.owner===0?'Kırmızı':'Açık'} taş`;}
   function pieceHTML(p,chosen){
     if(state.gameState.game==='hasami')return `<span class="hasami-stone p${p.owner} ${chosen?'chosen':''}"></span>`;
     const jp=p.promoted?(PROMO_JP[p.type]||PIECE[p.type].jp):PIECE[p.type].jp;
     const tr=p.promoted?(PROMO_TR[p.type]||PIECE[p.type].tr):PIECE[p.type].tr;
-    return `<span class="shogi-piece ${p.owner===1?'enemy':''} ${p.promoted?'promoted':''} ${chosen?'chosen':''}"><span class="jp">${jp}</span><span class="latin">${tr}</span></span>`;
+    return `<span class="shogi-piece owner-${p.owner} ${p.owner===1?'enemy':''} ${p.promoted?'promoted':''} ${chosen?'chosen':''}"><span class="jp">${jp}</span><span class="latin">${tr}</span></span>`;
   }
 
   const SHOGI_LESSONS=[
@@ -222,6 +249,7 @@
     app.querySelectorAll('[data-difficulty]').forEach(b=>b.onclick=()=>{state.difficulty=b.dataset.difficulty;render();});
     app.querySelectorAll('[data-rotate]').forEach(b=>b.onclick=()=>{state.rotateCoop=b.dataset.rotate==='true';render();});
     app.querySelectorAll('[data-sound]').forEach(b=>b.onclick=()=>{state.sound=b.dataset.sound==='true';render();});
+    app.querySelectorAll('[data-music]').forEach(b=>b.onclick=()=>{setMusic(b.dataset.music==='true');render();});
     app.querySelectorAll('[data-cell]').forEach(b=>b.onclick=()=>cellClick(Number(b.dataset.cell)));
     app.querySelectorAll('[data-hand]').forEach(b=>b.onclick=()=>handClick(b.dataset.hand,Number(b.dataset.owner)));
     app.querySelectorAll('[data-tutorial-game]').forEach(b=>b.onclick=()=>{state.tutorialGame=b.dataset.tutorialGame;state.tutorialStep=0;render();});
@@ -362,6 +390,12 @@
 
   let deferredPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;});
   async function installApp(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;}else toast('Tarayıcı menüsünden “Ana ekrana ekle” seçeneğini kullanabilirsin.');}
+  if(musicToggle)musicToggle.addEventListener('click',toggleMusic);
+  const unlockMusic=e=>{if(!e.target?.closest?.('#music-toggle'))startMusic();};
+  document.addEventListener('pointerdown',unlockMusic,{once:true,capture:true});
+  document.addEventListener('keydown',()=>startMusic(),{once:true,capture:true});
+  bgMusic?.addEventListener('error',()=>{state.music=false;updateMusicUI();});
+  updateMusicUI();
   if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
   render();
